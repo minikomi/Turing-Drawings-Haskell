@@ -23,6 +23,11 @@ type State = Int
 type Symbol = Int
 
 type Table = V.Vector Point
+
+showTable :: Table -> String
+showTable = V.foldr fmt "" 
+    where fmt (Point (st, sy, ac)) s = s Data.List.++ show st Data.List.++ show sy Data.List.++ show ac
+
 type Tape = V.Vector Symbol
 
 newtype Point = Point (State, Symbol, Action)
@@ -38,6 +43,7 @@ data World = World {
   , size      :: (Int, Int)
   , stepcount :: Int
 }
+
 
 genTable :: State -> Symbol -> IO Table
 genTable nst nsy = do
@@ -62,10 +68,10 @@ genWorld w h nst nsy = do
   return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 100
 
 tickWorld :: World -> World
-tickWorld world@(World wTable wTape st numStates _ (headX, headY) (nCols, nRows) _) =
-  let tapePos = ((nRows * headX) + headY)
+tickWorld world@(World wTable wTape st numStates _ (!headX, !headY) (!nCols, !nRows) _) =
+  let !tapePos = ((nRows * headX) + headY)
       sym = wTape `V.unsafeIndex` tapePos
-      idx = (numStates * sym) + st
+      !idx = (numStates * sym) + st
       Point (st', sym', ac) = wTable V.! idx
       (headX', headY') = case ac of
                           L -> if headX <= 0
@@ -118,6 +124,7 @@ handleEvent (EventKey (SpecialKey KeySpace) _ _ _) world@(World _ _ _ _ nsy _ (n
 handleEvent (EventKey (SpecialKey KeyEnter) _ _ _) world@(World _ _ _ nst nsy _ (nCols, nRows)_ ) = 
    do tbl <- genTable nst nsy
       tp  <- genTape nCols nRows nsy
+      print $ showTable tbl
       return world{
         table = tbl
         , tape  = tp
@@ -150,6 +157,7 @@ run windowX windowY scaleX scaleY !numStates !numSymbols
     let !sizeX = windowX `div` scaleX
     let !sizeY = windowY `div` scaleY
     initialWorld <- genWorld sizeX sizeY numStates numSymbols
+    print $ showTable (table initialWorld)
     playArrayIO (InWindow "Turing Drawings" (windowX, windowY) (10, 10))
                 (scaleX, scaleY)
                 20
