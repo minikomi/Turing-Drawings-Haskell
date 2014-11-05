@@ -44,7 +44,6 @@ data World = World {
   , stepcount :: Int
 }
 
-
 genTable :: State -> Symbol -> IO Table
 genTable nst nsy = do
   seed <- newStdGen
@@ -65,7 +64,7 @@ genWorld :: Int -> Int -> State -> Symbol -> IO World
 genWorld w h nst nsy = do
   tbl <- genTable nst nsy
   tp <- genTape w h nsy
-  return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 100
+  return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 20
 
 tickWorld :: World -> World
 tickWorld world@(World wTable wTape st numStates _ (!headX, !headY) (!nCols, !nRows) _) =
@@ -93,7 +92,7 @@ tickWorld world@(World wTable wTape st numStates _ (!headX, !headY) (!nCols, !nR
     }
 
 symToCol :: Symbol -> Color
-symToCol sym =
+symToCol !sym =
   case sym of 
     1 -> white
     2 -> red
@@ -108,7 +107,6 @@ displayWorld :: World -> IO (Array D DIM2 Color)
 displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) = do
   let v' = V.map symToCol tbl
   return $ delay $ fromVector (Z:. nRows :. nCols) v'
-
 
 -- handle space -- reset to start
 handleEvent :: Event -> World -> IO World
@@ -143,6 +141,7 @@ handleEvent (EventKey (SpecialKey KeyDown) _ _ _) world@(World _ _ _ _ _ _ _ s) 
 -- handle escape - quit
 handleEvent (EventKey (SpecialKey KeyEsc) _ _ _) _= System.exitWith System.ExitSuccess
 
+-- handle other - ignore
 handleEvent _ w = return w
 
 fpow :: Int -> (b -> b) -> b -> b
@@ -160,7 +159,7 @@ run windowX windowY scaleX scaleY !numStates !numSymbols
     print $ showTable (table initialWorld)
     playArrayIO (InWindow "Turing Drawings" (windowX, windowY) (10, 10))
                 (scaleX, scaleY)
-                20
+                30
                 initialWorld
                 displayWorld
                 handleEvent
@@ -170,7 +169,7 @@ main :: IO ()
 main
  = do args <- getArgs
       case args of
-        [] -> run 800 600 4 4 6 6
+        [] -> run 600 600 2 2 6 6
         [sizeX, sizeY, scaleX, scaleY, nSt, nSym]
               -> run (read sizeX) (read sizeY) (read scaleX) (read scaleY) (read nSt) (read nSym)
         _ -> putStr $ unlines
