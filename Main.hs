@@ -65,27 +65,27 @@ genWorld :: Int -> Int -> State -> Symbol -> IO World
 genWorld w h nst nsy = do
   tbl <- genTable nst nsy
   tp <- genTape w h nsy
-  return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 20
+  return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 3
 
 tickWorld :: World -> World
 tickWorld world@(World wTable wTape st numStates _ (!headX, !headY) (!nCols, !nRows) _) =
   let !tapePos = ((nRows * headX) + headY)
-      sym = wTape `V.unsafeIndex` tapePos
+      !sym = wTape `V.unsafeIndex` tapePos
       !idx = (numStates * sym) + st
       Point (st', sym', ac) = wTable V.! idx
-      (headX', headY') = case ac of
-                          L -> if headX <= 0
-                                then (pred nCols, headY)
-                                else (pred headX, headY)
-                          R -> if headX >= pred nCols
-                                then (0, headY)
-                                else (succ headX, headY)
-                          U -> if headY <= 0
-                                then (headX, pred nRows)
-                                else (headX, pred headY)
-                          D -> if headY >= pred nRows
-                                then (headX, 0)
-                                else (headX, succ headY)
+      (!headX', !headY') = case ac of
+                             L -> if headX <= 0
+                                   then (pred nCols, headY)
+                                   else (pred headX, headY)
+                             R -> if headX >= pred nCols
+                                   then (0, headY)
+                                   else (succ headX, headY)
+                             U -> if headY <= 0
+                                   then (headX, pred nRows)
+                                   else (headX, pred headY)
+                             D -> if headY >= pred nRows
+                                   then (headX, 0)
+                                   else (headX, succ headY)
     in world {
         pos   = (headX', headY')
       , state = st'
@@ -132,11 +132,11 @@ handleEvent (EventKey (SpecialKey KeyEnter) _ _ _) world@(World _ _ _ nst nsy _ 
 
 -- handle up - speed up
 handleEvent (EventKey (SpecialKey KeyUp) _ _ _) world@(World _ _ _ _ _ _ _ s) = 
-  return world{ stepcount = s + 5 }
+  return world{ stepcount = s + 1 }
 
 -- handle down - slow down
 handleEvent (EventKey (SpecialKey KeyDown) _ _ _) world@(World _ _ _ _ _ _ _ s) = 
-  return world{ stepcount = if s > 5 then s - 5 else s }
+  return world{ stepcount = if s > 1 then s - 1 else 1 }
 
 -- handle escape - quit
 handleEvent (EventKey (SpecialKey KeyEsc) _ _ _) _= System.exitWith System.ExitSuccess
@@ -159,7 +159,7 @@ run windowX windowY scaleX scaleY !numStates !numSymbols
     print $ showTable (table initialWorld)
     playArrayIO (InWindow "Turing Drawings" (windowX, windowY) (10, 10))
                 (scaleX, scaleY)
-                30
+                100
                 initialWorld
                 displayWorld
                 handleEvent
