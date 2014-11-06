@@ -10,6 +10,10 @@ import qualified Data.Vector            as V
 import Data.Array.Repa.Repr.Vector (fromVector)
 import qualified System.Exit      as System
 
+-- Point -----------------------------------------------------------------------
+
+type State = Int
+type Symbol = Int
 data Action = L | R | U | D
   deriving (Show, Eq, Bounded, Enum)
 
@@ -19,27 +23,12 @@ instance Random Action where
   randomR (a,b) g = case randomR (fromEnum a, fromEnum b) g of
                       (r, g') -> (toEnum r, g')
 
-type State = Int
-type Symbol = Int
-
-type Table = V.Vector Point
-
-
-type Tape = V.Vector Symbol
-
 newtype Point = Point (State, Symbol, Action)
   deriving Show
 
-data World = World {
-    table     :: Table
-  , tape      :: Tape
-  , state     :: State
-  , nStates   :: State
-  , nSymbols  :: Symbol
-  , pos       :: (Int, Int)
-  , size      :: (Int, Int)
-  , stepcount :: Int
-}
+-- Table -----------------------------------------------------------------------
+
+type Table = V.Vector Point
 
 showTable :: Table -> String
 showTable = V.foldr fmt "" 
@@ -58,8 +47,26 @@ genTable nst nsy = do
               rndPoint        = Point (rndSt, rndSy, rndAc)
           in return (rndPoint, newGen)
 
+-- Tape ------------------------------------------------------------------------
+
+type Tape = V.Vector Symbol
+
 genTape :: Int -> Int -> Symbol -> IO Tape
 genTape h w _ = return $ V.replicate (w * h) 0
+
+-- World -----------------------------------------------------------------------
+
+data World = World {
+    table     :: Table
+  , tape      :: Tape
+  , state     :: State
+  , nStates   :: State
+  , nSymbols  :: Symbol
+  , pos       :: (Int, Int)
+  , size      :: (Int, Int)
+  , stepcount :: Int
+}
+
 
 genWorld :: Int -> Int -> State -> Symbol -> IO World
 genWorld w h nst nsy = do
@@ -108,6 +115,8 @@ displayWorld :: World -> IO (Array D DIM2 Color)
 displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) = 
   return $ R.map symToCol $ fromVector (Z:. nRows :. nCols) tbl
 
+-- Event -----------------------------------------------------------------------
+
 -- handle space -- reset to start
 handleEvent :: Event -> World -> IO World
 handleEvent (EventKey (SpecialKey KeySpace) _ _ _) world@(World _ _ _ _ nsy _ (nCols, nRows)_ ) = 
@@ -145,7 +154,7 @@ handleEvent (EventKey (SpecialKey KeyEsc) _ _ _) _= System.exitWith System.ExitS
 handleEvent _ w = return w
 
 fpow :: Int -> (b -> b) -> b -> b
-fpow n f = foldr (.) id $ replicate n f
+fpow n f = foldr (.) f $ replicate (pred n) f
 
 handleStep :: Float -> World -> IO World
 handleStep _ w = return $ fpow (stepcount w) tickWorld w
@@ -169,7 +178,7 @@ main :: IO ()
 main
  = do args <- getArgs
       case args of
-        [] -> run 600 600 2 2 6 6
+        [] -> run 600 600 4 4 3 6
         [sizeX, sizeY, scaleX, scaleY, nSt, nSym]
               -> run (read sizeX) (read sizeY) (read scaleX) (read scaleY) (read nSt) (read nSym)
         _ -> putStr $ unlines
