@@ -68,24 +68,24 @@ genWorld w h nst nsy = do
   return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 3
 
 tickWorld :: World -> World
-tickWorld world@(World wTable wTape st numStates _ (!headX, !headY) (!nCols, !nRows) _) =
-  let !tapePos = ((nRows * headX) + headY)
-      !sym = wTape `V.unsafeIndex` tapePos
-      !idx = (numStates * sym) + st
+tickWorld world@(World wTable wTape st numStates _ (headX, headY) (nCols, nRows) _) =
+  let tapePos = ((nRows * headX) + headY)
+      sym = wTape `V.unsafeIndex` tapePos
+      idx = (numStates * sym) + st
       Point (st', sym', ac) = wTable V.! idx
-      (!headX', !headY') = case ac of
-                             L -> if headX <= 0
-                                   then (pred nCols, headY)
-                                   else (pred headX, headY)
-                             R -> if headX >= pred nCols
-                                   then (0, headY)
-                                   else (succ headX, headY)
-                             U -> if headY <= 0
-                                   then (headX, pred nRows)
-                                   else (headX, pred headY)
-                             D -> if headY >= pred nRows
-                                   then (headX, 0)
-                                   else (headX, succ headY)
+      (headX', headY') = case ac of
+                            L -> if headX <= 0
+                                  then (pred nCols, headY)
+                                  else (pred headX, headY)
+                            R -> if headX >= pred nCols
+                                  then (0, headY)
+                                  else (succ headX, headY)
+                            U -> if headY <= 0
+                                  then (headX, pred nRows)
+                                  else (headX, pred headY)
+                            D -> if headY >= pred nRows
+                                  then (headX, 0)
+                                  else (headX, succ headY)
     in world {
         pos   = (headX', headY')
       , state = st'
@@ -93,7 +93,7 @@ tickWorld world@(World wTable wTape st numStates _ (!headX, !headY) (!nCols, !nR
     }
 
 symToCol :: Symbol -> Color
-symToCol !sym =
+symToCol sym =
   case sym of 
     1 -> white
     2 -> red
@@ -151,7 +151,7 @@ handleStep :: Float -> World -> IO World
 handleStep _ w = return $ fpow (stepcount w) tickWorld w
 
 run :: Int -> Int -> Int -> Int -> State -> Symbol -> IO ()
-run windowX windowY scaleX scaleY !numStates !numSymbols
+run windowX windowY scaleX scaleY numStates numSymbols
  = do
     let !sizeX = windowX `div` scaleX
     let !sizeY = windowY `div` scaleY
