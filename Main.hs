@@ -7,8 +7,10 @@ import Data.List
 import Prelude                          as P
 import System.Random
 import qualified Data.Vector            as V
+import qualified Data.Vector.Mutable    as M
 import Data.Array.Repa.Repr.Vector (fromVector)
 import qualified System.Exit      as System
+import Control.Applicative (pure)
 
 -- Point -----------------------------------------------------------------------
 
@@ -31,7 +33,7 @@ newtype Point = Point (State, Symbol, Action)
 type Table = V.Vector Point
 
 showTable :: Table -> String
-showTable = V.foldr fmt "" 
+showTable = V.foldr fmt ""
     where fmt (Point (st, sy, ac)) s = s Data.List.++ show st Data.List.++ show sy Data.List.++ show ac
 
 genTable :: State -> Symbol -> IO Table
@@ -50,6 +52,13 @@ genTable nst nsy = do
 -- Tape ------------------------------------------------------------------------
 
 type Tape = V.Vector Symbol
+
+updateTape :: Int -> Symbol -> Tape -> IO Tape
+updateTape idx s t = {-# SCC update_tape #-} do 
+  tMut <- V.thaw t
+  M.write tMut idx s
+  t' <- V.freeze tMut
+  return $ t'
 
 genTape :: Int -> Int -> Symbol -> IO Tape
 genTape h w _ = return $ V.replicate (w * h) 0
@@ -74,13 +83,14 @@ genWorld w h nst nsy = do
   tp <- genTape w h nsy
   return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 3
 
-tickWorld :: World -> World
-tickWorld world@(World wTable wTape st numStates _ (headX, headY) (nCols, nRows) _) =
+tickWorld :: IO World -> IO World
+tickWorld w = do
+  world@(World wTable wTape st numStates _ (headX, headY) (nCols, nRows) _) <- w
   let tapePos = ((nRows * headX) + headY)
-      sym = wTape `V.unsafeIndex` tapePos
-      idx = (numStates * sym) + st
+      sym     = wTape `V.unsafeIndex` tapePos
+      idx     = (numStates * sym) + st
       Point (st', sym', ac) = wTable V.! idx
-      (headX', headY') = case ac of
+      (headX', headY') = case ac of 
                             L -> if headX <= 0
                                   then (pred nCols, headY)
                                   else (pred headX, headY)
@@ -93,14 +103,15 @@ tickWorld world@(World wTable wTape st numStates _ (headX, headY) (nCols, nRows)
                             D -> if headY >= pred nRows
                                   then (headX, 0)
                                   else (headX, succ headY)
-    in world {
-        pos   = (headX', headY')
-      , state = st'
-      , tape  = wTape `V.unsafeUpd` [(tapePos, sym')]
-    }
+  newTape <- updateTape tapePos sym' wTape
+  return world {
+      pos   = (headX', headY')
+    , state = st'
+    , tape  = newTape
+  }
 
 symToCol :: Symbol -> Color
-symToCol sym =
+symToCol sym = {-# SCC color_lookup #-}
   case sym of 
     1 -> white
     2 -> red
@@ -113,7 +124,8 @@ symToCol sym =
 
 displayWorld :: World -> IO (Array D DIM2 Color)
 displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) = 
-  return $ R.map symToCol $ fromVector (Z:. nRows :. nCols) tbl
+  return $ {-# SCC map_col #-}     R.map symToCol
+         $ {-# SCC from_vector #-} fromVector (Z:. nRows :. nCols) tbl
 
 -- Event -----------------------------------------------------------------------
 
@@ -157,7 +169,7 @@ fpow :: Int -> (b -> b) -> b -> b
 fpow n f = foldr (.) f $ replicate (pred n) f
 
 handleStep :: Float -> World -> IO World
-handleStep _ w = return $ fpow (stepcount w) tickWorld w
+handleStep _ w = {-# SCC handle_step #-} fpow (stepcount w) tickWorld $ pure w
 
 run :: Int -> Int -> Int -> Int -> State -> Symbol -> IO ()
 run windowX windowY scaleX scaleY numStates numSymbols
