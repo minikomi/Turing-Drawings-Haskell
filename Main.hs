@@ -24,9 +24,6 @@ type Symbol = Int
 
 type Table = V.Vector Point
 
-showTable :: Table -> String
-showTable = V.foldr fmt "" 
-    where fmt (Point (st, sy, ac)) s = s Data.List.++ show st Data.List.++ show sy Data.List.++ show ac
 
 type Tape = V.Vector Symbol
 
@@ -43,6 +40,10 @@ data World = World {
   , size      :: (Int, Int)
   , stepcount :: Int
 }
+
+showTable :: Table -> String
+showTable = V.foldr fmt "" 
+    where fmt (Point (st, sy, ac)) s = s Data.List.++ show st Data.List.++ show sy Data.List.++ show ac
 
 genTable :: State -> Symbol -> IO Table
 genTable nst nsy = do
@@ -104,9 +105,8 @@ symToCol !sym =
     _ -> black
 
 displayWorld :: World -> IO (Array D DIM2 Color)
-displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) = do
-  let v' = V.map symToCol tbl
-  return $ delay $ fromVector (Z:. nRows :. nCols) v'
+displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) = 
+  return $ R.map symToCol $ fromVector (Z:. nRows :. nCols) tbl
 
 -- handle space -- reset to start
 handleEvent :: Event -> World -> IO World
