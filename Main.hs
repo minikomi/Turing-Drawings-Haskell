@@ -54,8 +54,7 @@ genTable nst nsy = do
 type Tape = V.Vector Symbol
 
 updateTape :: Int -> Symbol -> Tape -> Tape
-updateTape idx s t = {-# SCC update_tape #-} do 
-  V.modify (\v -> M.write v idx s) t
+updateTape idx s = V.modify (\v -> M.write v idx s)
 
 genTape :: Int -> Int -> IO Tape
 genTape w h = return $ V.replicate (w * h) 0
@@ -83,7 +82,7 @@ genWorld w h nst nsy = do
 tickWorld :: IO World -> IO World
 tickWorld w = do
   world@(World wTable wTape st numStates _ (headX, headY) (nCols, nRows) _) <- w
-  let tapePos = ((nRows * headX) + headY)
+  let tapePos = nRows * headX + headY
       sym     = wTape `V.unsafeIndex` tapePos
       idx     = (numStates * sym) + st
       Point (st', sym', ac) = wTable V.! idx
@@ -107,7 +106,7 @@ tickWorld w = do
   }
 
 symToCol :: Symbol -> Color
-symToCol sym = {-# SCC color_lookup #-}
+symToCol sym = 
   case sym of 
     1 -> white
     2 -> red
@@ -120,14 +119,14 @@ symToCol sym = {-# SCC color_lookup #-}
 
 displayWorld :: World -> IO (Array D DIM2 Color)
 displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) = 
-  return $ {-# SCC map_col #-}     R.map symToCol
-         $ {-# SCC from_vector #-} fromVector (Z:. nRows :. nCols) tbl
+  return $ R.map symToCol
+         $ fromVector (Z:. nRows :. nCols) tbl
 
 -- Event -----------------------------------------------------------------------
 
 -- handle space -- reset to start
 handleEvent :: Event -> World -> IO World
-handleEvent (EventKey (SpecialKey KeySpace) _ _ _) world@(World _ _ _ _ nsy _ (nCols, nRows)_ ) = 
+handleEvent (EventKey (SpecialKey KeySpace) _ _ _) world@(World _ _ _ _ _ _ (nCols, nRows)_ ) = 
    do tp  <- genTape nCols nRows
       return world{
         tape  = tp
@@ -165,7 +164,7 @@ fpow :: Int -> (b -> b) -> b -> b
 fpow n f = foldr (.) f $ replicate (pred n) f
 
 handleStep :: Float -> World -> IO World
-handleStep _ w = {-# SCC handle_step #-} fpow (stepcount w) tickWorld $ pure w
+handleStep _ w = fpow (stepcount w) tickWorld $ pure w
 
 run :: Int -> Int -> Int -> Int -> State -> Symbol -> IO ()
 run windowX windowY scaleX scaleY numStates numSymbols
