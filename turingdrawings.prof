@@ -1,38 +1,37 @@
-	Thu Nov  6 15:22 2014 Time and Allocation Profiling Report  (Final)
+	Mon Nov 10 13:51 2014 Time and Allocation Profiling Report  (Final)
 
 	   turingdrawings +RTS -p -RTS
 
-	total time  =        8.56 secs   (8562 ticks @ 1000 us, 1 processor)
-	total alloc = 27,199,277,296 bytes  (excludes profiling overheads)
+	total time  =        2.44 secs   (2441 ticks @ 1000 us, 1 processor)
+	total alloc = 6,921,652,272 bytes  (excludes profiling overheads)
 
 COST CENTRE MODULE  %time %alloc
 
-update_tape Main     60.9   93.5
-MAIN        MAIN     19.4    0.0
-map_col     Main     18.5    6.3
+update_tape Main     55.3   92.5
+MAIN        MAIN     24.9    0.1
+map_col     Main     18.2    7.2
 
 
                                                                                               individual     inherited
 COST CENTRE     MODULE                                                      no.     entries  %time %alloc   %time %alloc
 
-MAIN            MAIN                                                        198           0   19.4    0.0   100.0  100.0
- callbackIdle   Graphics.Gloss.Internals.Interface.Simulate.Idle            401        1063    0.0    0.0    61.4   93.6
-  handle_step   Main                                                        402        2263    0.5    0.1    61.4   93.6
-   update_tape  Main                                                        403       70560   60.9   93.5    60.9   93.5
- map_col        Main                                                        398        1064   18.5    6.3    19.0    6.3
-  color_lookup  Main                                                        399    23940000    0.5    0.0     0.5    0.0
- from_vector    Main                                                        397        1064    0.0    0.0     0.0    0.0
- drawComponent  Graphics.Gloss.Internals.Render.Picture                     396        5320    0.1    0.0     0.1    0.0
+MAIN            MAIN                                                        198           0   24.9    0.1   100.0  100.0
+ callbackIdle   Graphics.Gloss.Internals.Interface.Simulate.Idle            401         308    0.0    0.0    55.9   92.7
+  handle_step   Main                                                        402        1007    0.6    0.3    55.9   92.7
+   update_tape  Main                                                        403       35496   55.3   92.5    55.3   92.5
+ map_col        Main                                                        398         309   18.2    7.2    18.6    7.2
+  color_lookup  Main                                                        399     6952500    0.5    0.0     0.5    0.0
+ from_vector    Main                                                        397         309    0.0    0.0     0.0    0.0
+ drawComponent  Graphics.Gloss.Internals.Render.Picture                     396        1545    0.3    0.0     0.3    0.0
  CAF            Main                                                        395           0    0.0    0.0     0.0    0.0
  CAF            Data.Array.Repa.Eval.Gang                                   394           0    0.0    0.0     0.0    0.0
  CAF            System.Random                                               372           0    0.0    0.0     0.0    0.0
- CAF            Graphics.Gloss.Data.Color                                   369           0    0.0    0.0     0.0    0.0
  CAF            Graphics.Gloss.Internals.Render.Picture                     354           0    0.0    0.0     0.0    0.0
   drawComponent Graphics.Gloss.Internals.Render.Picture                     400           0    0.0    0.0     0.0    0.0
  CAF            Graphics.Gloss.Internals.Interface.Backend.GLUT             352           0    0.0    0.0     0.0    0.0
  CAF            Graphics.UI.GLUT.State                                      335           0    0.0    0.0     0.0    0.0
  CAF            Graphics.UI.GLUT.Callbacks.Registration                     334           0    0.0    0.0     0.0    0.0
- CAF            Graphics.UI.GLUT.Raw.Functions                              330           0    0.0    0.0     0.0    0.0
+ CAF            Graphics.UI.GLUT.Raw.Functions                              330           0    0.2    0.0     0.2    0.0
  CAF            Graphics.Rendering.OpenGL.GL.LineSegments                   324           0    0.0    0.0     0.0    0.0
  CAF            Graphics.Rendering.OpenGL.GL.PerFragment                    322           0    0.0    0.0     0.0    0.0
  CAF            Graphics.Rendering.OpenGL.GLU.ErrorsInternal                300           0    0.0    0.0     0.0    0.0

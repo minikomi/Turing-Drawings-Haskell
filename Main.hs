@@ -53,15 +53,12 @@ genTable nst nsy = do
 
 type Tape = V.Vector Symbol
 
-updateTape :: Int -> Symbol -> Tape -> IO Tape
+updateTape :: Int -> Symbol -> Tape -> Tape
 updateTape idx s t = {-# SCC update_tape #-} do 
-  tMut <- V.thaw t
-  M.write tMut idx s
-  t' <- V.freeze tMut
-  return $ t'
+  V.modify (\v -> M.write v idx s) t
 
-genTape :: Int -> Int -> Symbol -> IO Tape
-genTape h w _ = return $ V.replicate (w * h) 0
+genTape :: Int -> Int -> IO Tape
+genTape w h = return $ V.replicate (w * h) 0
 
 -- World -----------------------------------------------------------------------
 
@@ -80,7 +77,7 @@ data World = World {
 genWorld :: Int -> Int -> State -> Symbol -> IO World
 genWorld w h nst nsy = do
   tbl <- genTable nst nsy
-  tp <- genTape w h nsy
+  tp  <- genTape w h 
   return $ World tbl tp (0 :: State) nst nsy (w `div` 2, h `div` 2) (w, h) 3
 
 tickWorld :: IO World -> IO World
@@ -103,11 +100,10 @@ tickWorld w = do
                             D -> if headY >= pred nRows
                                   then (headX, 0)
                                   else (headX, succ headY)
-  newTape <- updateTape tapePos sym' wTape
   return world {
       pos   = (headX', headY')
     , state = st'
-    , tape  = newTape
+    , tape  = updateTape tapePos sym' wTape
   }
 
 symToCol :: Symbol -> Color
@@ -132,7 +128,7 @@ displayWorld (World _ tbl _ _ _ _ (nCols, nRows) _) =
 -- handle space -- reset to start
 handleEvent :: Event -> World -> IO World
 handleEvent (EventKey (SpecialKey KeySpace) _ _ _) world@(World _ _ _ _ nsy _ (nCols, nRows)_ ) = 
-   do tp  <- genTape nCols nRows nsy
+   do tp  <- genTape nCols nRows
       return world{
         tape  = tp
         , pos = (nCols `div` 2, nRows `div` 2)
@@ -142,7 +138,7 @@ handleEvent (EventKey (SpecialKey KeySpace) _ _ _) world@(World _ _ _ _ nsy _ (n
 -- handle enter - totally new
 handleEvent (EventKey (SpecialKey KeyEnter) _ _ _) world@(World _ _ _ nst nsy _ (nCols, nRows)_ ) = 
    do tbl <- genTable nst nsy
-      tp  <- genTape nCols nRows nsy
+      tp  <- genTape nCols nRows
       print $ showTable tbl
       return world{
         table = tbl
