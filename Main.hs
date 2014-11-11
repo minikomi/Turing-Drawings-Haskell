@@ -160,11 +160,10 @@ handleEvent (EventKey (SpecialKey KeyEsc) _ _ _) _= System.exitWith System.ExitS
 -- handle other - ignore
 handleEvent _ w = return w
 
-fpow :: Int -> (b -> b) -> b -> b
-fpow n f = foldr (.) f $ replicate (pred n) f
-
 handleStep :: Float -> World -> IO World
-handleStep _ w = fpow (stepcount w) tickWorld $ pure w
+handleStep _ w = loop (stepcount w) (pure w)
+  where loop 0 w' = w'
+        loop i w' = loop (pred i) (tickWorld w')
 
 run :: Int -> Int -> Int -> Int -> State -> Symbol -> IO ()
 run windowX windowY scaleX scaleY numStates numSymbols
